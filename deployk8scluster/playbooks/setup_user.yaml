@@ -1,0 +1,29 @@
+---
+- name: Setup Kubernetes user with SSH access
+  hosts: all
+  become: yes
+  vars:
+    username: kube
+    ssh_key_path: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"  # Adjust path to your public key
+
+  tasks:
+    - name: Create a new user
+      user:
+        name: "{{ username }}"
+        state: present
+        shell: /bin/bash
+
+    - name: Create .ssh directory for the user
+      file:
+        path: "/home/{{ username }}/.ssh"
+        state: directory
+        owner: "{{ username }}"
+        group: "{{ username }}"
+        mode: '0700'
+
+    - name: Copy SSH public key to authorized_keys
+      authorized_key:
+        user: "{{ username }}"
+        state: present
+        key: "{{ ssh_key_path }}"
+

@@ -1,0 +1,7 @@
+---
+- name: Run playbook to setup Kubernetes user
+  import_playbook: setup_user.yaml
+
+- name: Run playbook for Kubernetes single node setup
+  import_playbook: single-node.yaml
+
