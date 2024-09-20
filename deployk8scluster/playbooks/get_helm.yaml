@@ -1,0 +1,37 @@
+---
+- name: Install Helm on Kubernetes Cluster
+  hosts: all 
+  become: yes
+  tasks:
+    - name: Download Helm binary
+      ansible.builtin.get_url:
+        url: https://get.helm.sh/helm-v3.10.3-linux-amd64.tar.gz
+        dest: /tmp/helm.tar.gz
+
+    - name: Extract Helm binary
+      ansible.builtin.unarchive:
+        src: /tmp/helm.tar.gz
+        dest: /tmp/
+        remote_src: yes
+
+    - name: Move helm to path 
+      copy: 
+        remote_src: yes
+        src: /tmp/linux-amd64/helm
+        dest: /usr/local/bin
+
+    - name: Remove old files foo
+      file: 
+        path: /tmp/helm.tar.gz 
+        state: absent
+
+    - name: Ensure Helm binary is executable
+      ansible.builtin.file:
+        path: /usr/local/bin/helm
+        mode: '0755'
+
+    - name: Clean up Helm tarball
+      ansible.builtin.file:
+        path: /tmp/helm.tar.gz
+        state: absent
+

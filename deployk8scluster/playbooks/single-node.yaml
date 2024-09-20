@@ -85,16 +85,34 @@
       register: k8s_init_output
       ignore_errors: yes
 
-    - name: Create kube config directory for user
-      file:
-        path: /home/kube/.kube
-        state: directory
-        owner: kube
-        mode: 0755
+    - name: Ensure bind address is set for kube-apiserver
+      lineinfile:
+        path: /etc/kubernetes/manifests/kube-apiserver.yaml
+        regexp: '^\s*-\s*--bind-address='
+        line: '    - --bind-address=0.0.0.0'
+        create: yes
+        backrefs: yes
+    
+    - name: Comment out the 'disabled_plugins = ["cri"]' line
+      ansible.builtin.lineinfile:
+        path: /etc/containerd/config.toml
+        regexp: '^disabled_plugins = \["cri"\]'
+        line: '#disabled_plugins = ["cri"]'
 
-    - name: Copy kube config
-      shell: |
-        mkdir -p $HOME/.kube
-        sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-        sudo chown $(id -u):$(id -g) $HOME/.kube/config
+    - name: Allow master node to schedule workloads
+      shell: kubectl taint nodes --all node-role.kubernetes.io/control-plane- node-role.kubernetes.io/master-
+      environment:
+        KUBECONFIG: /etc/kubernetes/admin.conf
+      notify:
+        - Restart containerd
 
+  handlers:
+    - name: Restart containerd
+      ansible.builtin.systemd:
+        name: containerd
+        state: restarted
+    
+    - name: Restart kubeapi-server
+      ansible.builtin.systemd:
+        name: containerd
+        state: restarted

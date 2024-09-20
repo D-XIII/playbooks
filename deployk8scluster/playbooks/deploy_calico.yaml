@@ -1,0 +1,20 @@
+---
+- name: Install Calico on Kubernetes Cluster
+  hosts: all
+  become: yes
+  tasks:
+
+    - name: Add Calico Helm repository
+      community.kubernetes.helm_repository:
+        name: projectcalico
+        repo_url: https://projectcalico.docs.tigera.io/charts
+        state: present
+
+
+    - name: Install Calico chart
+      community.kubernetes.helm:
+        name: calico
+        chart_ref: projectcalico/calico
+        namespace: kube-system
+        state: present
+
